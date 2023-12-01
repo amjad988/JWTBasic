@@ -5,7 +5,6 @@ const contactModel=require("../models/contact.model.js")
 const getContact = asynchandler(async (req, res) => {
     try {
         const contacts = await contactModel.find({userId:req.user.id});
-        console.log(contacts);
         if (!contacts) {
             return res.status(404).json({ error: 'No contacts found for the user' });
         }
@@ -18,18 +17,31 @@ const getContact = asynchandler(async (req, res) => {
 
 
 
-const postContact=asynchandler(async(req,res)=>{
+const postContact = asynchandler(async (req, res) => {
     console.log(req.body);
-    const{name,email,phone}=req.body
-    if(!name ||!email||!phone){
-        res.status(400)
-        throw new Error("All Fields are Required:")
+    const { name, email, phone } = req.body;
+
+    if (!name || !email || !phone) {
+        res.status(400);
+        throw new Error("All Fields are Required:");
     }
-    const addData=await contactModel.create({
-        name,email,phone,userId:req.user.id
-    })
-    res.status(200).json(addData)
-})
+    // Check if the phone number already exists
+    const existingContact = await contactModel.findOne({ phone });
+    if (existingContact) {
+        res.status(400);
+        throw new Error("Phone number already exists");
+    }
+    const addData = await contactModel.create({
+        name,
+        email,
+        phone,
+        userId: req.user.id,
+    });
+
+    res.status(200).json(addData);
+});
+
+
 
 const getByName = asynchandler(async (req, res) => {
         const contact = await contactModel.findOne({ name: req.params.name });
